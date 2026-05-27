@@ -280,10 +280,32 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   // viewState: 0=기본, 1=상세, 2=QR
   let viewState=0, togOn=false, sec=30, tick=null;
+  let _qrLoaded=false, _qrCallbacks=[];
+
+  function ensureQR(cb){
+    if(typeof QRCode!=='undefined'){ cb(); return; }
+    _qrCallbacks.push(cb);
+    if(_qrLoaded) return; // 이미 로딩 중
+    _qrLoaded=true;
+    function tryLoad(urls, idx){
+      if(idx>=urls.length){ console.error('QR lib load failed'); return; }
+      const s=document.createElement('script');
+      s.src=urls[idx];
+      s.onload=function(){
+        _qrCallbacks.forEach(function(fn){ fn(); });
+        _qrCallbacks=[];
+      };
+      s.onerror=function(){ tryLoad(urls, idx+1); };
+      document.head.appendChild(s);
+    }
+    tryLoad([
+      'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+      'https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js'
+    ], 0);
+  }
 
   let D={name:'홍길동',birth:'000101-1234567',addr:'서울시 강남구 테헤란로 1',addr2:'',issue:'2024.07.01',issuer:'서울특별시장'};
 
@@ -374,20 +396,23 @@
   function makeQR(big){
     const id=big?'qrBig':'qrSmall';
     const sz=big?130:100;
-    const el=document.getElementById(id);
-    el.innerHTML='';
-    el.style.width=sz+'px';
-    el.style.height=sz+'px';
-    el.style.overflow='hidden';
-    el.style.display='block';
-    try{
-      new QRCode(el,{text:D.name+'|'+D.birth+'|'+D.addr+(D.addr2?' '+D.addr2:''),width:sz,height:sz,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
-      setTimeout(function(){
-        Array.from(el.children).forEach(function(c){
-          c.style.cssText='width:'+sz+'px!important;height:'+sz+'px!important;display:block!important;max-width:none!important;max-height:none!important;';
-        });
-      },60);
-    }catch(e){}
+    ensureQR(function(){
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.innerHTML='';
+      el.style.width=sz+'px';
+      el.style.height=sz+'px';
+      el.style.overflow='hidden';
+      el.style.display='block';
+      try{
+        new QRCode(el,{text:D.name+'|'+D.birth+'|'+D.addr+(D.addr2?' '+D.addr2:''),width:sz,height:sz,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+        setTimeout(function(){
+          Array.from(el.children).forEach(function(c){
+            c.style.cssText='width:'+sz+'px!important;height:'+sz+'px!important;display:block!important;max-width:none!important;max-height:none!important;';
+          });
+        },60);
+      }catch(e){ console.error('QR gen error:',e); }
+    });
   }
 
   // 뷰 전환 핵심 함수 — classList.toggle 대신 style.display 직접 제어
