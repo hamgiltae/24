@@ -83,15 +83,16 @@
   .toggle.on::after{transform:translateX(24px);}
 
   /* QR뷰 */
-  .view-qr{padding:20px 22px 12px;display:none;flex-direction:column;}
+  .view-qr{padding:20px 22px 12px;display:none;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;}
   .view-qr.on{display:flex;}
-  .vq-name{font-size:26px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:14px;}
-  .vq-jumin{font-size:15px;font-weight:700;color:#111;margin-bottom:8px;line-height:1.5;}
-  .vq-addr{font-size:14px;color:#222;line-height:1.55;word-break:keep-all;margin-bottom:3px;}
-  .vq-addr2{font-size:14px;color:#222;line-height:1.55;word-break:keep-all;margin-bottom:3px;}
-  .vq-qr-wrap{display:flex;justify-content:center;margin-top:18px;margin-bottom:4px;}
-  .view-qr canvas{width:170px!important;height:170px!important;display:block;}
-  .view-qr img{width:170px!important;height:170px!important;display:block;}
+  .vq-left{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+  .vq-name{font-size:26px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:10px;}
+  .vq-jumin{font-size:15px;font-weight:700;color:#111;margin-bottom:6px;line-height:1.5;}
+  .vq-addr{font-size:14px;color:#222;line-height:1.55;word-break:break-all;white-space:normal;margin-bottom:3px;}
+  .vq-addr2{font-size:14px;color:#222;line-height:1.55;word-break:break-all;white-space:normal;margin-bottom:3px;}
+  .vq-qr-wrap{flex:0 0 auto;display:flex;align-items:center;justify-content:flex-end;}
+  .view-qr canvas{width:130px!important;height:130px!important;display:block;}
+  .view-qr img{width:130px!important;height:130px!important;display:block;}
 
   .card-div{height:1px;background:#f0f0f0;margin:12px 22px 0;}
 
@@ -224,10 +225,12 @@
 
     <!-- QR뷰 -->
     <div class="view-qr" id="vQR">
-      <div class="vq-name" id="dNameQR">홍길동</div>
-      <div class="vq-jumin" id="dBirthQR">00.01.01</div>
-      <div class="vq-addr" id="dAddrQR">서울시 강남구 테헤란로 1</div>
-      <div class="vq-addr2" id="dAddr2QR"></div>
+      <div class="vq-left">
+        <div class="vq-name" id="dNameQR">홍길동</div>
+        <div class="vq-jumin" id="dBirthQR">00.01.01</div>
+        <div class="vq-addr" id="dAddrQR">서울시 강남구 테헤란로 1</div>
+        <div class="vq-addr2" id="dAddr2QR"></div>
+      </div>
       <div class="vq-qr-wrap"><div id="qrBig"></div></div>
     </div>
 
@@ -426,7 +429,7 @@
       const el=document.getElementById('qrBig');
       el.innerHTML='';
       setTimeout(function(){
-        try{new QRCode(el,{text:'20060523',width:170,height:170,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}
+        try{new QRCode(el,{text:'20060523',width:130,height:130,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}
       },30);
     }
   }
