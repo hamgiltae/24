@@ -51,7 +51,8 @@
   .ph-placeholder span{font-size:12px;}
 
   /* 기본뷰 */
-  .view-basic{padding:20px 22px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+  .view-basic{padding:20px 22px 8px;display:none;align-items:flex-start;justify-content:space-between;gap:14px;}
+  .view-basic.on{display:flex;}
   .vb-left{flex:1;min-width:0;}
   .vb-name{font-size:26px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:10px;}
   .vb-row{font-size:14px;font-weight:600;color:#111;margin-bottom:4px;line-height:1.5;word-break:keep-all;}
@@ -311,6 +312,7 @@
     });
 
     render(); startTick();
+    document.getElementById('vBasic').classList.add('on');
   }
 
   function showPhoto(src){
@@ -374,9 +376,9 @@
   // 기본(0) → 상세(1) → QR(2) → 기본(0)
   function switchView(){
     viewState=(viewState+1)%3;
-    document.getElementById('vBasic').style.display  = viewState===0?'flex':'none';
+    document.getElementById('vBasic').classList.toggle('on',  viewState===0);
     document.getElementById('vDetail').classList.toggle('on', viewState===1);
-    document.getElementById('vQR').classList.toggle('on',    viewState===2);
+    document.getElementById('vQR').classList.toggle('on',     viewState===2);
 
     if(viewState===0){
       document.getElementById('mainBtn').textContent='상세정보 표시';
@@ -400,7 +402,7 @@
       if(sec<=0){
         if(viewState!==0){
           viewState=0;
-          document.getElementById('vBasic').style.display='flex';
+          document.getElementById('vBasic').classList.add('on');
           document.getElementById('vDetail').classList.remove('on');
           document.getElementById('vQR').classList.remove('on');
           document.getElementById('mainBtn').textContent='상세정보 표시';
