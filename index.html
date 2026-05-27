@@ -83,10 +83,14 @@
   .toggle.on::after{transform:translateX(24px);}
 
   /* QR뷰 */
-  .view-qr{padding:24px 22px 12px;display:none;justify-content:center;}
+  .view-qr{padding:24px 22px 12px;display:none;justify-content:space-between;align-items:flex-start;gap:16px;}
   .view-qr.on{display:flex;}
-  .view-qr canvas{width:170px!important;height:170px!important;display:block;}
-  .view-qr img{width:170px!important;height:170px!important;display:block;}
+  .view-qr canvas{width:140px!important;height:140px!important;display:block;}
+  .view-qr img{width:140px!important;height:140px!important;display:block;}
+  .vq-info{flex:1;min-width:0;}
+  .vq-name{font-size:22px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:10px;}
+  .vq-row{font-size:14px;font-weight:600;color:#111;margin-bottom:4px;line-height:1.55;word-break:keep-all;}
+  .vq-qr{flex-shrink:0;}
 
   .card-div{height:1px;background:#f0f0f0;margin:12px 22px 0;}
 
@@ -217,7 +221,13 @@
 
     <!-- QR뷰 -->
     <div class="view-qr" id="vQR">
-      <div id="qrBig"></div>
+      <div class="vq-info">
+        <div class="vq-name" id="dNameQR">홍길동</div>
+        <div class="vq-row" id="dBirthQR">00.01.01</div>
+        <div class="vq-row" id="dAddrQR">서울시 강남구 테헤란로 1</div>
+        <div class="vq-row" id="dAddr2QR"></div>
+      </div>
+      <div class="vq-qr"><div id="qrBig"></div></div>
     </div>
 
     <div class="card-div"></div>
@@ -314,7 +324,7 @@
     });
 
     render(); startTick();
-    document.getElementById('vBasic').classList.add('on');
+    setView(0);
   }
 
   function showPhoto(src){
@@ -375,23 +385,43 @@
     }catch(e){}
   }
 
-  // 기본(0) → 상세(1) → QR(2) → 상세(1)
-  function switchView(){
-    if(viewState===0) viewState=1;
-    else if(viewState===1) viewState=2;
-    else viewState=1; // QR → 상세 (기본으로 안 돌아감)
-
-    document.getElementById('vBasic').classList.toggle('on',  viewState===0);
-    document.getElementById('vDetail').classList.toggle('on', viewState===1);
-    document.getElementById('vQR').classList.toggle('on',     viewState===2);
-
-    if(viewState===1){
+  // 뷰 전환 핵심 함수 — classList.toggle 대신 style.display 직접 제어
+  function setView(n){
+    viewState = n;
+    document.getElementById('vBasic').style.display  = (n===0) ? 'flex'  : 'none';
+    document.getElementById('vDetail').style.display = (n===1) ? 'block' : 'none';
+    document.getElementById('vQR').style.display     = (n===2) ? 'flex'  : 'none';
+    if(n===0){
+      document.getElementById('mainBtn').textContent='상세정보 표시';
+      togOn=false; document.getElementById('tog').classList.remove('on');
+      renderDetail();
+    } else if(n===1){
       document.getElementById('mainBtn').textContent='QR정보 표시';
       renderDetail();
     } else {
       document.getElementById('mainBtn').textContent='상세정보 표시';
-      makeQR(true);
+      // 텍스트 채우기
+      document.getElementById('dNameQR').textContent=D.name;
+      const frontQ=(D.birth.split('-')[0]||'').replace(/\D/g,'');
+      let bdQ=frontQ;
+      if(frontQ.length===6) bdQ=frontQ.slice(0,2)+'.'+frontQ.slice(2,4)+'.'+frontQ.slice(4,6);
+      document.getElementById('dBirthQR').textContent=bdQ;
+      document.getElementById('dAddrQR').textContent=D.addr;
+      document.getElementById('dAddr2QR').textContent=D.addr2||'';
+      // QR 생성
+      const el=document.getElementById('qrBig');
+      el.innerHTML='';
+      setTimeout(function(){
+        try{new QRCode(el,{text:D.name+'|'+D.birth+'|'+D.addr+(D.addr2?' '+D.addr2:''),width:140,height:140,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}
+      },30);
     }
+  }
+
+  // 버튼 클릭: 기본→상세→QR→상세 순환
+  function switchView(){
+    if(viewState===0)      setView(1);
+    else if(viewState===1) setView(2);
+    else                   setView(1);
     resetTick();
   }
 
@@ -401,15 +431,7 @@
       document.getElementById('tNum').textContent=sec;
       document.getElementById('tBar').style.width=(sec/30*100)+'%';
       if(sec<=0){
-        if(viewState!==0){
-          viewState=0;
-          document.getElementById('vBasic').classList.add('on');
-          document.getElementById('vDetail').classList.remove('on');
-          document.getElementById('vQR').classList.remove('on');
-          document.getElementById('mainBtn').textContent='상세정보 표시';
-          togOn=false; document.getElementById('tog').classList.remove('on');
-          renderDetail();
-        }
+        if(viewState!==0) setView(0);
         sec=30;
         document.getElementById('tNum').textContent=30;
         document.getElementById('tBar').style.width='100%';
