@@ -53,8 +53,8 @@
   .ph-placeholder span{font-size:12px;}
 
   /* 기본뷰 */
-  .view-basic{padding:20px 22px 8px;display:none;}
-  .view-basic.on{display:block;}
+  .view-basic{padding:20px 22px 8px;display:block;}
+  .view-basic.hidden{display:none!important;}
   .vb-inner{display:flex;flex-direction:row;align-items:flex-start;justify-content:space-between;gap:12px;}
   .vb-left{flex:1 1 auto;min-width:0;overflow:hidden;}
   .vb-name{font-size:26px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:10px;}
@@ -328,6 +328,9 @@
     });
 
     render(); startTick();
+    // PWA 대응: 초기 뷰 명시적 초기화
+    document.getElementById('vDetail').style.display='none';
+    document.getElementById('vQR').style.display='none';
     setView(0);
   }
 
@@ -405,7 +408,6 @@
   function setView(n){
     viewState = n;
     document.getElementById("vBasic").style.display=(n===0)?"block":"none";
-    // vb-inner handles flex internally; no need to set flex on vBasic itself
     document.getElementById('vDetail').style.display = (n===1) ? 'block' : 'none';
     document.getElementById('vQR').style.display     = (n===2) ? 'flex'  : 'none';
     if(n===0){
@@ -532,7 +534,20 @@
     render(); closeConfirm();
   }
 
-  document.addEventListener('DOMContentLoaded',init);
+  // PWA/크롬앱 대응: DOMContentLoaded가 이미 지난 경우도 처리
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',init);
+  } else {
+    init();
+  }
+
+  // PWA 홈화면 앱으로 복귀 시(백그라운드→포그라운드) 뷰 재렌더링
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'){
+      render();
+      setView(viewState);
+    }
+  });
 
   // PWA 서비스워커 등록
   if('serviceWorker' in navigator){
