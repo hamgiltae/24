@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>모바일신분증</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="신분증">
+<meta name="theme-color" content="#ffffff">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'Noto Sans KR',sans-serif;
+    background:#ebebeb;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    user-select:none;-webkit-user-select:none;
+  }
+  .header{
+    width:100%;max-width:480px;background:#fff;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;border-bottom:1px solid #e2e2e2;
+    position:sticky;top:0;z-index:100;
+  }
+  .h-back{font-size:22px;color:#222;cursor:pointer;width:32px;line-height:1;}
+  .h-title{font-size:17px;font-weight:700;color:#111;}
+  .h-menu{width:32px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;cursor:pointer;padding:4px 0;}
+  .h-menu span{display:block;width:22px;height:2px;background:#222;border-radius:2px;}
+
+  .tabs{
+    width:100%;max-width:480px;background:#fff;
+    display:flex;border-bottom:1px solid #e0e0e0;padding:0 18px;
+  }
+  .tab{padding:13px 0;margin-right:24px;font-size:15px;font-weight:500;color:#bbb;cursor:pointer;border-bottom:2.5px solid transparent;transition:all 0.18s;}
+  .tab.active{color:#111;border-bottom-color:#111;font-weight:700;}
+
+  .page{width:100%;max-width:480px;padding:18px 14px 48px;display:flex;flex-direction:column;align-items:center;}
+
+  .card{width:100%;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,0.10);}
+
+  /* 사진 */
+  .photo-area{width:100%;background:#fff;display:flex;align-items:flex-end;justify-content:center;padding-top:26px;}
+  .photo-frame{width:148px;height:186px;background:#ececec;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .photo-frame img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+  .ph-placeholder{display:flex;flex-direction:column;align-items:center;gap:8px;color:#c0c0c0;}
+  .ph-placeholder svg{width:50px;height:50px;}
+  .ph-placeholder span{font-size:12px;}
+
+  /* 기본뷰 */
+  .view-basic{padding:20px 22px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+  .vb-left{flex:1;min-width:0;}
+  .vb-name{font-size:26px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:10px;}
+  .vb-row{font-size:14px;font-weight:600;color:#111;margin-bottom:4px;line-height:1.5;word-break:keep-all;}
+  .vb-qr{width:100px;height:100px;flex-shrink:0;}
+  .vb-qr canvas{width:100px!important;height:100px!important;display:block;}
+  .vb-qr img{width:100px!important;height:100px!important;display:block;}
+
+  /* 상세뷰 */
+  .view-detail{padding:20px 22px 8px;display:none;}
+  .view-detail.on{display:block;}
+  .vd-name{font-size:26px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:14px;}
+  .vd-jumin-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .vd-jumin{font-size:15px;font-weight:700;color:#111;} .vd-jumin .dot{font-size:15px;font-weight:400;}
+  .vd-addr{font-size:14px;color:#222;line-height:1.55;word-break:keep-all;margin-bottom:3px;}
+  .vd-addr2{font-size:14px;color:#222;line-height:1.55;word-break:keep-all;margin-bottom:3px;}
+  /* 마스크: 작은 점 */
+  .vd-mask{font-size:16px;color:#111;letter-spacing:0px;margin-bottom:14px;line-height:1.6;}
+  .vd-spacer{margin-bottom:14px;}
+  .vd-issue{font-size:13px;color:#444;margin-bottom:2px;}
+  .vd-issuer{font-size:13px;color:#aaa;}
+
+  /* 토글 */
+  .toggle{width:56px;height:32px;border-radius:16px;background:#ddd;position:relative;cursor:pointer;flex-shrink:0;transition:background 0.2s;border:1px solid #ccc;}
+  .toggle.on{background:#333;border-color:#333;}
+  .toggle::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);transition:transform 0.2s;}
+  .toggle.on::after{transform:translateX(24px);}
+
+  /* QR뷰 */
+  .view-qr{padding:24px 22px 12px;display:none;justify-content:center;}
+  .view-qr.on{display:flex;}
+  .view-qr canvas{width:170px!important;height:170px!important;display:block;}
+  .view-qr img{width:170px!important;height:170px!important;display:block;}
+
+  .card-div{height:1px;background:#f0f0f0;margin:12px 22px 0;}
+
+  .timer-area{padding:12px 22px 18px;}
+  .t-bar-bg{width:100%;height:5px;background:#e5e5e5;border-radius:99px;overflow:hidden;margin-bottom:7px;}
+  .t-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,#4a87f5,#7b52f5);transition:width 1s linear;}
+  .t-label{font-size:13px;color:#aaa;}
+  .t-label b{color:#4a87f5;font-weight:700;}
+
+  .card-btn{width:100%;background:#1c1c1e;color:#fff;font-size:16px;font-weight:600;padding:19px;text-align:center;border:none;outline:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:0.3px;transition:background 0.12s;}
+  .card-btn:active{background:#2e2e2e;}
+
+  /* 드롭다운 */
+  .dd-backdrop{display:none;position:fixed;inset:0;z-index:200;}
+  .dd-backdrop.on{display:block;}
+  .dd-menu{display:none;position:fixed;top:54px;right:14px;background:#fff;border-radius:13px;box-shadow:0 8px 30px rgba(0,0,0,0.15);overflow:hidden;z-index:300;min-width:148px;}
+  .dd-menu.on{display:block;animation:ddIn 0.15s ease;}
+  @keyframes ddIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .dd-item{padding:15px 18px;font-size:15px;color:#111;cursor:pointer;border-bottom:1px solid #f3f3f3;}
+  .dd-item:last-child{border:none;}
+  .dd-item:active{background:#f5f5f5;}
+  .dd-item.red{color:#e53935;}
+
+  /* 모달 */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.38);z-index:400;align-items:flex-end;justify-content:center;}
+  .modal-bg.on{display:flex;}
+  .modal{background:#fff;width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:10px 20px 40px;max-height:92vh;overflow-y:auto;animation:sheetUp 0.22s ease;}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-bar{width:38px;height:4px;background:#ddd;border-radius:2px;margin:10px auto 16px;}
+  .modal-ttl{font-size:18px;font-weight:800;color:#111;margin-bottom:18px;}
+  .photo-edit{display:flex;align-items:center;gap:14px;background:#f7f7f7;border-radius:14px;padding:14px;margin-bottom:20px;}
+  .pe-thumb{width:56px;height:72px;background:#e0e0e0;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .pe-thumb img{width:100%;height:100%;object-fit:cover;object-position:top;}
+  .pe-none{font-size:11px;color:#aaa;text-align:center;line-height:1.5;}
+  .pe-btns{display:flex;flex-direction:column;gap:8px;flex:1;}
+  .pe-btn{padding:10px 14px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;text-align:left;}
+  .pe-btn.blue{background:#eef2ff;color:#4a87f5;}
+  .pe-btn.pink{background:#fff0f0;color:#e53935;}
+  .pe-btn:active{opacity:0.78;}
+  .modal label{font-size:12px;color:#999;font-weight:500;display:block;margin-bottom:5px;}
+  .modal input{width:100%;border:1.5px solid #ebebeb;border-radius:12px;padding:13px 14px;font-size:15px;font-family:'Noto Sans KR',sans-serif;color:#111;outline:none;background:#fafafa;margin-bottom:14px;transition:border 0.15s,background 0.15s;}
+  .modal input:focus{border-color:#4a87f5;background:#fff;}
+  .modal-actions{display:flex;gap:10px;margin-top:4px;}
+  .ma-btn{flex:1;padding:15px;border-radius:13px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+  .ma-btn.gray{background:#f2f2f2;color:#666;}
+  .ma-btn.dark{background:#1c1c1e;color:#fff;}
+  .ma-btn:active{opacity:0.8;}
+
+  .confirm-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.42);z-index:500;align-items:center;justify-content:center;padding:24px;}
+  .confirm-bg.on{display:flex;}
+  .confirm-box{background:#fff;border-radius:18px;padding:28px 22px 22px;width:100%;max-width:310px;text-align:center;animation:popUp 0.18s ease;}
+  @keyframes popUp{from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)}}
+  .cb-title{font-size:17px;font-weight:800;color:#111;margin-bottom:8px;}
+  .cb-desc{font-size:14px;color:#888;line-height:1.6;margin-bottom:22px;}
+  .cb-btns{display:flex;gap:10px;}
+  .cb-btn{flex:1;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+  .cb-btn.gray{background:#f2f2f2;color:#555;}
+  .cb-btn.red{background:#e53935;color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="h-back">&#8592;</span>
+  <span class="h-title">모바일신분증</span>
+  <div class="h-menu" onclick="openDD(event)">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active">주민등록증</div>
+  <div class="tab">운전면허증</div>
+</div>
+
+<div class="dd-backdrop" id="ddBack" onclick="closeDD()"></div>
+<div class="dd-menu" id="ddMenu">
+  <div class="dd-item" onclick="openEdit()">정보 수정</div>
+  <div class="dd-item red" onclick="askDelete()">정보 삭제</div>
+</div>
+
+<div class="page">
+  <div class="card">
+
+    <div class="photo-area">
+      <div class="photo-frame">
+        <img id="photoImg" style="display:none;" src="" alt="">
+        <div class="ph-placeholder" id="phPlaceholder">
+          <svg viewBox="0 0 52 52" fill="none">
+            <circle cx="26" cy="18" r="11" fill="#c8c8c8"/>
+            <path d="M4 48c0-12.15 9.85-22 22-22s22 9.85 22 22" fill="#c8c8c8"/>
+          </svg>
+          <span>사진 없음</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기본뷰 -->
+    <div class="view-basic" id="vBasic">
+      <div class="vb-left">
+        <div class="vb-name" id="dName">홍길동</div>
+        <div class="vb-row"  id="dBirth">00.01.01</div>
+        <div class="vb-row"  id="dAddr">서울시 강남구 테헤란로 1</div>
+      </div>
+      <div class="vb-qr"><div id="qrSmall"></div></div>
+    </div>
+
+    <!-- 상세뷰 -->
+    <div class="view-detail" id="vDetail">
+      <div class="vd-name" id="dName2">홍길동</div>
+      <div class="vd-jumin-row">
+        <div class="vd-jumin" id="dJumin">000101 - ••••••••</div>
+        <div class="toggle" id="tog" onclick="togSwitch()"></div>
+      </div>
+      <!-- 공개 블록 -->
+      <div id="addrBlock">
+        <div class="vd-addr"  id="dAddr2">서울시 강남구 테헤란로 1</div>
+        <div class="vd-addr2" id="dAddr3"></div>
+        <div class="vd-spacer"></div>
+      </div>
+      <!-- 마스크 블록 (숨김시) — 작은 점 -->
+      <div id="addrMask" style="display:none;">
+        <div class="vd-mask">•••••••••••</div>
+      </div>
+      <div class="vd-issue"  id="dIssue">24.07.01</div>
+      <div class="vd-issuer" id="dIssuer">서울특별시장</div>
+    </div>
+
+    <!-- QR뷰 -->
+    <div class="view-qr" id="vQR">
+      <div id="qrBig"></div>
+    </div>
+
+    <div class="card-div"></div>
+
+    <div class="timer-area">
+      <div class="t-bar-bg"><div class="t-bar" id="tBar" style="width:100%"></div></div>
+      <div class="t-label">남은시간 <b id="tNum">30</b>초</div>
+    </div>
+
+    <!-- 버튼: 기본→상세정보 표시 / 상세→QR정보 표시 / QR→상세정보 표시(기본으로) -->
+    <button class="card-btn" id="mainBtn" onclick="switchView()">상세정보 표시</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="position:fixed;top:-999px;left:-999px;opacity:0;">
+
+<!-- 편집 모달 -->
+<div class="modal-bg" id="modalBg" onclick="bgClose(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-bar"></div>
+    <div class="modal-ttl">정보 수정</div>
+    <div class="photo-edit">
+      <div class="pe-thumb">
+        <img id="peImg" src="" alt="" style="display:none;">
+        <span class="pe-none" id="peNone">사진<br>없음</span>
+      </div>
+      <div class="pe-btns">
+        <button class="pe-btn blue" id="btnPhotoChange">사진 변경</button>
+        <button class="pe-btn pink" id="btnPhotoDel" style="display:none;" onclick="delPhoto()">사진 삭제</button>
+      </div>
+    </div>
+    <label>이름</label>
+    <input id="iName" type="text" placeholder="이름">
+    <label>생년월일</label>
+    <input id="iBirth" type="text" placeholder="예: 050223-1234567" maxlength="14" oninput="fmtBirth(this)">
+    <label>주소</label>
+    <input id="iAddr" type="text" placeholder="예: 화성시 남양읍 시티프라디움2차">
+    <label>상세주소</label>
+    <input id="iAddr2" type="text" placeholder="예: 203동 502호">
+    <label>발급일</label>
+    <input id="iIssue" type="text" placeholder="예: 2024.07.01">
+    <label>발급기관</label>
+    <input id="iIssuer" type="text" placeholder="예: 경기 화성시장">
+    <div class="modal-actions">
+      <button class="ma-btn gray" onclick="closeEdit()">취소</button>
+      <button class="ma-btn dark" onclick="saveEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 삭제 확인 -->
+<div class="confirm-bg" id="confirmBg">
+  <div class="confirm-box">
+    <div class="cb-title">정보를 삭제할까요?</div>
+    <div class="cb-desc">저장된 모든 정보와 사진이<br>삭제됩니다. 되돌릴 수 없어요.</div>
+    <div class="cb-btns">
+      <button class="cb-btn gray" onclick="closeConfirm()">취소</button>
+      <button class="cb-btn red"  onclick="doDelete()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  // viewState: 0=기본, 1=상세, 2=QR
+  let viewState=0, togOn=false, sec=30, tick=null;
+
+  let D={name:'홍길동',birth:'000101-1234567',addr:'서울시 강남구 테헤란로 1',addr2:'',issue:'2024.07.01',issuer:'서울특별시장'};
+
+  function init(){
+    const s=localStorage.getItem('idc7_data');
+    if(s) D=JSON.parse(s);
+    const p=localStorage.getItem('idc7_photo');
+    if(p) showPhoto(p);
+
+    document.getElementById('btnPhotoChange').addEventListener('click',function(e){
+      e.preventDefault(); e.stopPropagation();
+      const inp=document.getElementById('fileInput');
+      inp.value=''; inp.click();
+    });
+    document.getElementById('fileInput').addEventListener('change',function(){
+      const f=this.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=function(ev){
+        const src=ev.target.result;
+        localStorage.setItem('idc7_photo',src);
+        showPhoto(src);
+        document.getElementById('peImg').src=src;
+        document.getElementById('peImg').style.display='block';
+        document.getElementById('peNone').style.display='none';
+        document.getElementById('btnPhotoDel').style.display='block';
+      };
+      r.readAsDataURL(f);
+    });
+
+    render(); startTick();
+  }
+
+  function showPhoto(src){
+    document.getElementById('photoImg').src=src;
+    document.getElementById('photoImg').style.display='block';
+    document.getElementById('phPlaceholder').style.display='none';
+  }
+  function clearPhoto(){
+    document.getElementById('photoImg').src='';
+    document.getElementById('photoImg').style.display='none';
+    document.getElementById('phPlaceholder').style.display='flex';
+  }
+
+  function render(){
+    document.getElementById('dName').textContent=D.name;
+    document.getElementById('dName2').textContent=D.name;
+    const front=(D.birth.split('-')[0]||'').replace(/\D/g,'');
+    let bd=front;
+    if(front.length===6) bd=front.slice(0,2)+'.'+front.slice(2,4)+'.'+front.slice(4,6);
+    document.getElementById('dBirth').textContent=bd;
+    document.getElementById('dAddr').textContent=D.addr;
+    document.getElementById('dAddr2').textContent=D.addr;
+    document.getElementById('dAddr3').textContent=D.addr2||'';
+    document.getElementById('dIssue').textContent=D.issue.replace(/^20/,'');
+    document.getElementById('dIssuer').textContent=D.issuer;
+    renderDetail();
+    makeQR(false);
+  }
+
+  function renderDetail(){
+    const parts=D.birth.split('-');
+    const front=parts[0]||'';
+    const back=parts[1]||'';
+    if(togOn&&back){
+      document.getElementById('dJumin').textContent=front+' - '+back;
+      document.getElementById('addrBlock').style.display='block';
+      document.getElementById('addrMask').style.display='none';
+    } else {
+      document.getElementById('dJumin').textContent=front+' - ••••••••';
+      document.getElementById('addrBlock').style.display='none';
+      document.getElementById('addrMask').style.display='block';
+    }
+  }
+
+  function togSwitch(){
+    togOn=!togOn;
+    document.getElementById('tog').classList.toggle('on',togOn);
+    renderDetail();
+  }
+
+  function makeQR(big){
+    const id=big?'qrBig':'qrSmall';
+    const sz=big?170:100;
+    const el=document.getElementById(id);
+    el.innerHTML='';
+    try{
+      new QRCode(el,{text:D.name+'|'+D.birth+'|'+D.addr+(D.addr2?' '+D.addr2:''),width:sz,height:sz,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){}
+  }
+
+  // 기본(0) → 상세(1) → QR(2) → 기본(0)
+  function switchView(){
+    viewState=(viewState+1)%3;
+    document.getElementById('vBasic').style.display  = viewState===0?'flex':'none';
+    document.getElementById('vDetail').classList.toggle('on', viewState===1);
+    document.getElementById('vQR').classList.toggle('on',    viewState===2);
+
+    if(viewState===0){
+      document.getElementById('mainBtn').textContent='상세정보 표시';
+      togOn=false;
+      document.getElementById('tog').classList.remove('on');
+      renderDetail();
+    } else if(viewState===1){
+      document.getElementById('mainBtn').textContent='QR정보 표시';
+    } else {
+      document.getElementById('mainBtn').textContent='상세정보 표시';
+      makeQR(true);
+    }
+    resetTick();
+  }
+
+  function startTick(){
+    tick=setInterval(()=>{
+      sec--;
+      document.getElementById('tNum').textContent=sec;
+      document.getElementById('tBar').style.width=(sec/30*100)+'%';
+      if(sec<=0){
+        if(viewState!==0){
+          viewState=0;
+          document.getElementById('vBasic').style.display='flex';
+          document.getElementById('vDetail').classList.remove('on');
+          document.getElementById('vQR').classList.remove('on');
+          document.getElementById('mainBtn').textContent='상세정보 표시';
+          togOn=false; document.getElementById('tog').classList.remove('on');
+          renderDetail();
+        }
+        sec=30;
+        document.getElementById('tNum').textContent=30;
+        document.getElementById('tBar').style.width='100%';
+      }
+    },1000);
+  }
+  function resetTick(){
+    clearInterval(tick);sec=30;
+    document.getElementById('tNum').textContent=30;
+    document.getElementById('tBar').style.width='100%';
+    startTick();
+  }
+
+  function fmtBirth(inp){
+    let v=inp.value.replace(/\D/g,'');
+    if(v.length>13)v=v.slice(0,13);
+    inp.value=v.length>6?v.slice(0,6)+'-'+v.slice(6):v;
+  }
+
+  function openDD(e){
+    e.stopPropagation();
+    const on=document.getElementById('ddMenu').classList.toggle('on');
+    document.getElementById('ddBack').classList.toggle('on',on);
+  }
+  function closeDD(){
+    document.getElementById('ddMenu').classList.remove('on');
+    document.getElementById('ddBack').classList.remove('on');
+  }
+
+  function openEdit(){
+    closeDD();
+    document.getElementById('iName').value=D.name;
+    document.getElementById('iBirth').value=D.birth;
+    document.getElementById('iAddr').value=D.addr;
+    document.getElementById('iAddr2').value=D.addr2||'';
+    document.getElementById('iIssue').value=D.issue;
+    document.getElementById('iIssuer').value=D.issuer;
+    const p=localStorage.getItem('idc7_photo');
+    if(p){
+      document.getElementById('peImg').src=p;
+      document.getElementById('peImg').style.display='block';
+      document.getElementById('peNone').style.display='none';
+      document.getElementById('btnPhotoDel').style.display='block';
+    } else {
+      document.getElementById('peImg').style.display='none';
+      document.getElementById('peNone').style.display='block';
+      document.getElementById('btnPhotoDel').style.display='none';
+    }
+    document.getElementById('modalBg').classList.add('on');
+  }
+  function closeEdit(){document.getElementById('modalBg').classList.remove('on');}
+  function bgClose(e){if(e.target===document.getElementById('modalBg'))closeEdit();}
+
+  function saveEdit(){
+    const n=document.getElementById('iName').value.trim();
+    const b=document.getElementById('iBirth').value.trim();
+    const a=document.getElementById('iAddr').value.trim();
+    const a2=document.getElementById('iAddr2').value.trim();
+    const i=document.getElementById('iIssue').value.trim();
+    const is=document.getElementById('iIssuer').value.trim();
+    if(n)D.name=n; if(b)D.birth=b; if(a)D.addr=a;
+    D.addr2=a2;
+    if(i)D.issue=i; if(is)D.issuer=is;
+    localStorage.setItem('idc7_data',JSON.stringify(D));
+    render(); closeEdit();
+  }
+
+  function delPhoto(){
+    localStorage.removeItem('idc7_photo'); clearPhoto();
+    document.getElementById('peImg').style.display='none';
+    document.getElementById('peNone').style.display='block';
+    document.getElementById('btnPhotoDel').style.display='none';
+  }
+
+  function askDelete(){closeDD();document.getElementById('confirmBg').classList.add('on');}
+  function closeConfirm(){document.getElementById('confirmBg').classList.remove('on');}
+  function doDelete(){
+    localStorage.removeItem('idc7_data'); localStorage.removeItem('idc7_photo');
+    D={name:'홍길동',birth:'000101-1234567',addr:'서울시 강남구 테헤란로 1',addr2:'',issue:'2024.07.01',issuer:'서울특별시장'};
+    clearPhoto(); togOn=false; document.getElementById('tog').classList.remove('on');
+    render(); closeConfirm();
+  }
+
+  document.addEventListener('DOMContentLoaded',init);
+
+  // PWA 서비스워커 등록
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
+</body>
+</html>
