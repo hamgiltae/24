@@ -60,7 +60,8 @@
   .vb-name{font-size:26px;font-weight:900;color:#111;letter-spacing:-0.5px;margin-bottom:10px;}
   .vb-row{font-size:14px;font-weight:600;color:#111;margin-bottom:4px;line-height:1.5;word-break:break-all;white-space:normal;}
   .vb-qr{width:100px;height:100px;flex:0 0 100px;align-self:flex-start;overflow:hidden;}
-  .vb-qr *{max-width:100px!important;max-height:100px!important;width:100px!important;height:100px!important;display:block!important;}
+  .vb-qr canvas,.vb-qr img{width:100px!important;height:100px!important;display:block!important;}
+  .vb-qr table{width:100px!important;height:100px!important;}
 
   /* 상세뷰 */
   .view-detail{padding:20px 22px 8px;display:none;}
@@ -317,6 +318,8 @@
     document.getElementById('vDetail').style.display='none';
     document.getElementById('vQR').style.display='none';
     setView(0);
+    // qrSmall은 DOM 렌더링 완료 후 생성
+    setTimeout(function(){ makeQR(false); }, 100);
   }
 
   function showPhoto(src){
@@ -343,7 +346,8 @@
     document.getElementById('dIssue').textContent=D.issue.replace(/^20/,'');
     document.getElementById('dIssuer').textContent=D.issuer;
     renderDetail();
-    makeQR(false);
+    // qrSmall은 vBasic이 보일 때만 재생성
+    if(viewState===0) setTimeout(function(){ makeQR(false); }, 60);
   }
 
   function renderDetail(){
@@ -369,7 +373,7 @@
 
   function makeQR(big){
     const id=big?'qrBig':'qrSmall';
-    const sz=big?170:100;
+    const sz=big?130:100;
     const el=document.getElementById(id);
     el.innerHTML='';
     el.style.width=sz+'px';
@@ -378,14 +382,11 @@
     el.style.display='block';
     try{
       new QRCode(el,{text:D.name+'|'+D.birth+'|'+D.addr+(D.addr2?' '+D.addr2:''),width:sz,height:sz,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
-      // QRCode lib sometimes generates canvas+img both — force size on children
       setTimeout(function(){
         Array.from(el.children).forEach(function(c){
-          c.style.width=sz+'px';
-          c.style.height=sz+'px';
-          c.style.display='block';
+          c.style.cssText='width:'+sz+'px!important;height:'+sz+'px!important;display:block!important;max-width:none!important;max-height:none!important;';
         });
-      },50);
+      },60);
     }catch(e){}
   }
 
@@ -412,19 +413,10 @@
       document.getElementById('dBirthQR').textContent=bdQ;
       document.getElementById('dAddrQR').textContent=D.addr;
       document.getElementById('dAddr2QR').textContent=D.addr2||'';
-      // QR 생성
-      const el=document.getElementById('qrBig');
-      el.innerHTML='';
+      // QR 생성 (display:flex 된 후 생성해야 크기가 잡힘)
       requestAnimationFrame(function(){
         setTimeout(function(){
-          try{
-            new QRCode(el,{text:'20060523',width:130,height:130,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
-            Array.from(el.children).forEach(function(c){
-              c.style.width='130px';
-              c.style.height='130px';
-              c.style.display='block';
-            });
-          }catch(e){}
+          makeQR(true);
         },50);
       });
     }
