@@ -1,7 +1,7 @@
 const CACHE = 'idcard-v1';
 const FILES = [
-  '/index.html',
-  '/manifest.json'
+  '/24/index.html',
+  '/24/manifest.json'
 ];
 
 self.addEventListener('install', e => {
